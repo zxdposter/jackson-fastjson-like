@@ -6,12 +6,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 封装 ObjectNode 的一些操作，贴近 fastjson 的写法
@@ -43,7 +46,6 @@ public class JacksonObject extends Jackson {
      * @param value 反序列化数据来源
      * @return 封装的 JacksonObject 对象
      */
-    @SneakyThrows
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     private static JacksonObject deserialization(Map<String, Object> value) {
         ObjectNode objectNode = OBJECT_MAPPER.valueToTree(value);
@@ -102,7 +104,6 @@ public class JacksonObject extends Jackson {
      * @param key key
      * @return 封装的 JacksonObject
      */
-    @SneakyThrows
     public JacksonObject getJacksonObject(String key) {
         JsonNode value = objectNode.get(key);
 
@@ -121,7 +122,6 @@ public class JacksonObject extends Jackson {
      * @param key key
      * @return 封装的 JacksonArray
      */
-    @SneakyThrows
     public JacksonArray getJacksonArray(String key) {
         JsonNode value = objectNode.get(key);
 
@@ -213,8 +213,7 @@ public class JacksonObject extends Jackson {
      * @param key key
      * @return byte 数组
      */
-    @SneakyThrows
-    public byte[] getBytes(String key) {
+    public byte[] getBytes(String key) throws IOException {
         JsonNode value = objectNode.get(key);
 
         if (value.isBinary()) {
@@ -230,7 +229,6 @@ public class JacksonObject extends Jackson {
      * @param key key
      * @return short
      */
-    @SneakyThrows
     public short shortValue(String key) {
         JsonNode value = objectNode.get(key);
 
@@ -377,6 +375,29 @@ public class JacksonObject extends Jackson {
     public JacksonObject put(String key, Object value) {
         objectNode.replace(key, OBJECT_MAPPER.valueToTree(value));
         return this;
+    }
+
+    /**
+     * 映射值
+     *
+     * @param key      key
+     * @param function 函数
+     * @return 映射值
+     */
+    public <T> T map(String key, Function<Optional<JsonNode>, T> function) {
+        return function.apply(Optional.ofNullable(objectNode.get(key)));
+    }
+
+    /**
+     * 存在操作
+     *
+     * @param key      key
+     * @param consumer 函数
+     */
+    public void ifPresent(String key, Consumer<JsonNode> consumer) {
+        if (objectNode.has(key)) {
+            consumer.accept(objectNode.get(key));
+        }
     }
 
     /**

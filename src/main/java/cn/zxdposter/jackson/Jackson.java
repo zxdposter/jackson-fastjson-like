@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
 
 /**
  * 对 jackson 的封装
@@ -15,12 +15,15 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author zxd
  */
-@Slf4j
 public abstract class Jackson {
     /**
      * 共用对象，与系统统一设置结合，在 spring 项目中，使用 Jackson2ObjectMapperBuilder.build() 生成.
      */
-    public static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    protected static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    public static void setObjectMapper(ObjectMapper objectMapper) {
+        OBJECT_MAPPER = objectMapper;
+    }
 
     /**
      * java 对象转化成封装的 JacksonObject 对象
@@ -72,8 +75,7 @@ public abstract class Jackson {
      * @param object java 对象
      * @return json string
      */
-    @SneakyThrows
-    public static String objectToString(Object object) {
+    public static String objectToString(Object object) throws IOException {
         return OBJECT_MAPPER.writeValueAsString(object);
     }
 
@@ -83,8 +85,10 @@ public abstract class Jackson {
      * @param text json string
      * @return 封装的 JacksonObject 对象
      */
-    @SneakyThrows
-    public static JacksonObject parseObject(String text) {
+    public static JacksonObject parseObject(String text) throws IOException {
+        if (text == null) {
+            return new JacksonObject();
+        }
         return new JacksonObject((ObjectNode) OBJECT_MAPPER.readTree(text));
     }
 
@@ -94,8 +98,7 @@ public abstract class Jackson {
      * @param text json string
      * @return java 对象
      */
-    @SneakyThrows
-    public static <T> T parseJavaObject(String text, TypeReference<T> typeReference) {
+    public static <T> T parseJavaObject(String text, TypeReference<T> typeReference) throws IOException {
         return OBJECT_MAPPER.readValue(text, typeReference);
     }
 
@@ -106,8 +109,7 @@ public abstract class Jackson {
      * @param text json string
      * @return java 对象
      */
-    @SneakyThrows
-    public static <T> T parseJavaObject(String text, Class<T> type) {
+    public static <T> T parseJavaObject(String text, Class<T> type) throws IOException {
         return OBJECT_MAPPER.readValue(text, type);
     }
 
@@ -117,8 +119,7 @@ public abstract class Jackson {
      * @param text json string
      * @return 封装的 parseArray 对象
      */
-    @SneakyThrows
-    public static JacksonArray parseArray(String text) {
+    public static JacksonArray parseArray(String text) throws IOException {
         return new JacksonArray((ArrayNode) OBJECT_MAPPER.readTree(text));
     }
 
@@ -128,8 +129,7 @@ public abstract class Jackson {
      * @param object java 对象
      * @return byte 数组
      */
-    @SneakyThrows
-    public static byte[] objectToBytes(Object object) {
+    public static byte[] objectToBytes(Object object) throws IOException {
         return OBJECT_MAPPER.writeValueAsBytes(object);
     }
 
@@ -138,8 +138,7 @@ public abstract class Jackson {
      *
      * @return json string
      */
-    @SneakyThrows
-    public String toJsonString() {
+    public String toJsonString() throws IOException {
         return OBJECT_MAPPER.writeValueAsString(this);
     }
 
@@ -170,6 +169,10 @@ public abstract class Jackson {
      */
     @Override
     public String toString() {
-        return this.toJsonString();
+        try {
+            return this.toJsonString();
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

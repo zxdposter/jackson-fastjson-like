@@ -6,9 +6,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -29,8 +28,11 @@ public class JacksonArray extends Jackson implements Iterable<JsonNode> {
     /**
      * 被封装的 ArrayNode
      */
-    @Getter
     private final ArrayNode arrayNode;
+
+    public ArrayNode getArrayNode() {
+        return arrayNode;
+    }
 
     /**
      * 序列化指定函数
@@ -48,7 +50,6 @@ public class JacksonArray extends Jackson implements Iterable<JsonNode> {
      * @param value 反序列化数据来源
      * @return 封装的 JacksonArray 对象
      */
-    @SneakyThrows
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     private static JacksonArray deserialization(List<Object> value) {
         ArrayNode arrayNode = OBJECT_MAPPER.valueToTree(value);
@@ -308,14 +309,13 @@ public class JacksonArray extends Jackson implements Iterable<JsonNode> {
      * @param index 下标
      * @return byte 数组
      */
-    @SneakyThrows
-    public byte[] getBytes(int index) {
+    public byte[] getBytes(int index) throws IOException {
         JsonNode value = arrayNode.get(index);
 
         if (value.isBinary()) {
             return value.binaryValue();
         } else {
-            return null;
+            return new byte[]{};
         }
     }
 
